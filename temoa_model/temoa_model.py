@@ -93,8 +93,8 @@ for any vintage of technology.
     M.vintage_optimize = Set(ordered=True, initialize=init_set_vintage_optimize)
     M.vintage_all = Set(ordered=True, initialize=init_set_vintage_all)
 
-    # always-empty Set; hack to perform inter-Set or inter-Param validation
-    M.validate_time = Set(initialize=validate_time)
+	 # Use BuildAction to perform inter-Set or inter-Param validation
+    M.validate_time = BuildAction(rule=validate_time)
 
     M.time_season = Set()
     M.time_of_day = Set()
@@ -118,8 +118,8 @@ for any vintage of technology.
 
     M.SegFrac = Param(M.time_season, M.time_of_day)
 
-    # always-empty Set; hack to perform inter-Set or inter-Param validation
-    M.validate_SegFrac = Set(initialize=validate_SegFrac)
+    # Use BuildAction to perform inter-Set or inter-Param validation
+    M.validate_SegFrac = BuildAction(rule=validate_SegFrac)
 
     M.CapacityToActivity = Param(M.tech_all, default=1)
 
@@ -134,19 +134,19 @@ for any vintage of technology.
     M.LifetimeTech = Param(M.LifetimeTech_tv, default=30)  # in years
     M.LifetimeLoan = Param(M.LifetimeLoan_tv, default=10)  # in years
 
-    # always empty set, like the validation hacks above.  Temoa uses a couple
+    # Use BuildAction like the validation hacks above.  Temoa uses a couple
     # of global variables to precalculate some oft-used results in constraint
     # generation.  This is therefore intentially placed after all Set and Param
     # definitions and initializations, but before the Var, Objectives, and
     # Constraints.
-    M.IntializeProcessParameters = Set(rule=InitializeProcessParameters)
+    M.IntializeProcessParameters = BuildAction(rule=InitializeProcessParameters)
 
     M.DemandDefaultDistribution = Param(M.time_season, M.time_of_day)
     M.DemandSpecificDistribution = Param(M.time_season, M.time_of_day, M.commodity_demand)
     M.Demand = Param(M.time_optimize, M.commodity_demand)
 
-    # always-empty Set; hack to perform Demand initialization and validation
-    M.initialize_Demands = Set(rule=CreateDemands)
+    # Use BuildAction: hack to perform Demand initialization and validation
+    M.initialize_Demands = BuildAction(rule=CreateDemands)
 
     M.ResourceBound = Param(M.time_optimize, M.commodity_physical)
 
@@ -172,8 +172,9 @@ for any vintage of technology.
     M.LoanAnnualize = Param(M.Loan_tv, rule=ParamLoanAnnualize_rule)
 
     M.TechOutputSplit = Param(M.commodity_physical, M.tech_all, M.commodity_carrier)
-    # always-empty Set; hack to perform inter-Set or inter-Param validation
-    M.validate_TechOutputSplit = Set(initialize=validate_TechOutputSplit)
+
+    # Use BuildAction to perform inter-Set or inter-Param validation
+    M.validate_TechOutputSplit = BuildAction(rule=validate_TechOutputSplit)
 
     M.MinCapacity = Param(M.time_optimize, M.tech_all)
     M.MaxCapacity = Param(M.time_optimize, M.tech_all)

@@ -134,7 +134,7 @@ def validate_time(M):
                'time_horizon max:   {}\ntime_future min:    {}')
         raise TemoaValidationError(msg.format(horizonh, future))
 
-    return tuple()
+    # return tuple()
 
 
 def validate_SegFrac(M):
@@ -160,7 +160,7 @@ def validate_SegFrac(M):
 
         raise TemoaValidationError(msg.format(items, total))
 
-    return tuple()
+    # return tuple()
 
 
 def CreateDemands(M):
@@ -279,7 +279,7 @@ def CreateDemands(M):
 
             raise TemoaValidationError(msg.format(dem, dem, items, total))
 
-    return tuple()
+    # return tuple()
 
 
 def validate_TechOutputSplit(M):
@@ -317,7 +317,7 @@ def validate_TechOutputSplit(M):
 
         raise TemoaValidationError(msg.format(items, l_total))
 
-    return set()
+    # return set()
 
 
 def init_set_time_optimize(M):
@@ -474,7 +474,7 @@ def InitializeProcessParameters(M):
         if ProcessVintages(p, t)
     )
 
-    return set()
+    # return set()
 
 ##############################################################################
 # Sparse index creation functions
