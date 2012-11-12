@@ -1273,10 +1273,12 @@ def temoa_solve(model):
 
     from time import clock
 
-    from coopr.opt import SolverFactory
+    from coopr.opt import SolverFactory, SolverManagerFactory
     from coopr.pyomo import ModelData
-
+    from utils import results_writer
     from pformat_results import pformat_results
+    tee = False
+    solver_manager = SolverManagerFactory('serial')
 
     options = parse_args()
     dot_dats = options.dot_dat
@@ -1318,7 +1320,9 @@ def temoa_solve(model):
     SE.write('[        ] Solving.')
     SE.flush()
     if opt:
-        result = opt.solve(instance)
+        result = solver_manager.solve(instance, opt=opt, tee=tee,
+                                  suffixes=['dual', 'rc'])
+		# result = opt.solve(instance)
         SE.write('\r[%8.2f\n' % duration())
     else:
         SE.write('\r---------- Not solving: no available solver\n')
@@ -1327,10 +1331,14 @@ def temoa_solve(model):
     SE.write('[        ] Formatting results.')
     SE.flush()
     # ... print the easier-to-read/parse format
+    instance.load(result)
     updated_results = instance.update_results(result)
-    formatted_results = pformat_results(instance, updated_results)
+    results_writer(result, instance)
     SE.write('\r[%8.2f\n' % duration())
-    SO.write(formatted_results)
+    # updated_results = instance.update_results(result)
+    # formatted_results = pformat_results(instance, updated_results)
+    # SE.write('\r[%8.2f\n' % duration())
+    # SO.write(formatted_results)
 
     if options.graph_format:
         SE.write('[        ] Creating Temoa model diagrams.')
