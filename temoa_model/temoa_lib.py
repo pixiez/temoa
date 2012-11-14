@@ -1261,7 +1261,7 @@ def parse_args():
 # Direct invocation methods (when modeler runs via "python model.py ..."
 
 
-def temoa_solve(model):
+def temoa_solve(model_data):
     from sys import argv, version_info
 
     if version_info < (2, 7):
@@ -1277,6 +1277,7 @@ def temoa_solve(model):
     from coopr.pyomo import ModelData
     from utils import results_writer
     from pformat_results import pformat_results
+
     tee = False
     solver_manager = SolverManagerFactory('serial')
 
@@ -1308,19 +1309,19 @@ def temoa_solve(model):
             msg = "\n\nExpecting a dot dat (e.g., data.dat) file, found '{}'\n"
             raise SystemExit(msg.format(f))
         mdata.add(f)
-    mdata.read(model)
+    mdata.read(model_data.model)
     SE.write('\r[%8.2f\n' % duration())
 
     SE.write('[        ] Creating Temoa model instance.')
     SE.flush()
     # Now do the solve and ...
-    instance = model.create(mdata)
+    model_data.instance = model_data.model.create(mdata)
     SE.write('\r[%8.2f\n' % duration())
 
     SE.write('[        ] Solving.')
     SE.flush()
     if opt:
-        result = solver_manager.solve(instance, opt=opt, tee=tee,
+        model_data.result = solver_manager.solve(model_data.instance, opt=opt, tee=tee,
                                   suffixes=['dual', 'rc'])
 		# result = opt.solve(instance)
         SE.write('\r[%8.2f\n' % duration())
@@ -1331,13 +1332,10 @@ def temoa_solve(model):
     SE.write('[        ] Formatting results.')
     SE.flush()
     # ... print the easier-to-read/parse format
-    instance.load(result)
-    updated_results = instance.update_results(result)
-    results_writer(result, instance)
-    SE.write('\r[%8.2f\n' % duration())
+    results_writer(model_data.result, model_data.instance)
     # updated_results = instance.update_results(result)
     # formatted_results = pformat_results(instance, updated_results)
-    # SE.write('\r[%8.2f\n' % duration())
+    SE.write('\r[%8.2f\n' % duration())
     # SO.write(formatted_results)
 
     if options.graph_format:

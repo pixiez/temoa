@@ -1,4 +1,4 @@
-This branch, energysystem_process, is the current "main" branch of the Temoa
+This branch, elastic_demand, is the current "main" branch of this fork of the  Temoa
 Project.  The four subdirectories are:
 
 1. temoa_model/

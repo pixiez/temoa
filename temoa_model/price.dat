@@ -1,0 +1,70 @@
+data;
+
+param: MinDemand    MaxDemand  :=
+    # year      # min    # max
+
+      1990         RH          17.64         32.76    
+      1990         RL           3.92          7.28    
+      1990         TX           3.64          6.76    
+      2000         RH          26.46         49.14    
+      2000         RL           5.88         10.92    
+      2000         TX           5.46         10.14    
+      2010         RH          39.69         73.71    
+      2010         RL           9.52         17.68    
+      2010         TX          8.183        15.197    
+    ;
+
+param: Price    Elast:=
+    # year   # season   # time_of_day   # demand    # price    # elasticity
+
+                1990                inter                  day                   RH        115.826          0.3
+                1990                inter                  day                   RL        58.5706          0.3
+                1990                inter                  day                   TX        526.482          0.3
+                1990                inter                night                   RH        115.826          0.3
+                1990                inter                night                   RL        42.1709          0.3
+                1990                inter                night                   TX        526.482          0.3
+                1990               summer                  day                   RL        58.5706          0.3
+                1990               summer                  day                   TX        526.482          0.3
+                1990               summer                night                   RL        42.1709          0.3
+                1990               summer                night                   TX        526.482          0.3
+                1990               winter                  day                   RH        298.395          0.3
+                1990               winter                  day                   RL        288.697          0.3
+                1990               winter                  day                   TX        526.482          0.3
+                1990               winter                night                   RH        115.826          0.3
+                1990               winter                night                   RL        42.1735          0.3
+                1990               winter                night                   TX        526.482          0.3
+                2000                inter                  day                   RH        35.9573          0.3
+                2000                inter                  day                   RL        35.9573          0.3
+                2000                inter                  day                   TX        323.214          0.3
+                2000                inter                night                   RH        49.8075          0.3
+                2000                inter                night                   RL        25.8892          0.3
+                2000                inter                night                   TX        323.214          0.3
+                2000               summer                  day                   RL        35.9573          0.3
+                2000               summer                  day                   TX        323.214          0.3
+                2000               summer                night                   RL        25.8892          0.3
+                2000               summer                night                   TX        323.214          0.3
+                2000               winter                  day                   RH        182.402          0.3
+                2000               winter                  day                   RL        242.222          0.3
+                2000               winter                  day                   TX         2624.8          0.3
+                2000               winter                night                   RH        72.6813          0.3
+                2000               winter                night                   RL        72.6813          0.3
+                2000               winter                night                   TX        323.214          0.3
+                2010                inter                  day                   RH        30.5022          0.3
+                2010                inter                  day                   RL        22.0747          0.3
+                2010                inter                  day                   TX        198.425          0.3
+                2010                inter                night                   RH        43.6536          0.3
+                2010                inter                night                   RL        15.8938          0.3
+                2010                inter                night                   TX        198.425          0.3
+                2010               summer                  day                   RL        22.0747          0.3
+                2010               summer                  day                   TX        198.425          0.3
+                2010               summer                night                   RL        15.8938          0.3
+                2010               summer                night                   TX        198.425          0.3
+                2010               winter                  day                   RH        109.997          0.3
+                2010               winter                  day                   RL        154.205          0.3
+                2010               winter                  day                   TX        1560.65          0.3
+                2010               winter                night                   RH        48.5814          0.3
+                2010               winter                night                   RL        48.5814          0.3
+                2010               winter                night                   TX        198.425          0.3
+    ;
+
+param num_demand_segments := 27 ;    # number of segments in the demand range

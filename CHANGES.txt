@@ -1,0 +1,49 @@
+This branch, elastic_demand, is the "main" branch of this fork of the  Temoa
+Project. This branch implements the elastic demand version of a MARKAL type models.
+
+See Section 1.6 of http://www.iea-etsap.org/web/MrklDoc-I_StdMARKAL.pdf.
+
+Note that the branch energysystem in the "main" branch of main repository:
+
+https://github.com/hunteke/temoa
+https://github.com/hunteke/temoa.git
+
+
+TRY:
+
+python price_generator.py ../data_files/utopia-exp.dat --solver cbc
+python elastic_model_script.py ../data_files/utopia-exp.dat ./price.dat  --solver cbc
+
+NOTE: The solver should return duals.
+
+Please read README.txt before reading this.
+
+Compared to the branch energysystem this branch, elastic_demand, contains the following new files:
+
+1. utils.py
+utils.py has a new results_writer function that we use.
+
+2. temoa_elastic_model.py
+temoa_elastic_model.py contains the elastic demand version of the temoa model. Demand 
+is now a variable which is determined by maximizing the total welfare: 
+
+Consumer costs - Producer costs.
+
+3. temoa_elastic_rules.py
+temoa_elastic_rules.py has additional rules/functions for the elastic version of the 
+temoa model.
+
+4. price_generator.py
+This is a script to obtain price data for a reference demand.
+The price data are obtained from the duals of the constraint, DemandConstraint.
+The elasticities are exogenous, and are supplied in this script. The search range for the 
+variable V_Demand, (MinDemand, MaxDemand) is determined using a parameter, DEMAND_RANGE. 
+The Price, MinDemand and MaxDemand are written to the file, price.dat.
+
+5. price.dat
+Ouput of the price_generator.py script.
+
+6. elastic_model_script.py
+Solves for variable demand using the elastic demand version of temoa in temoa_elastic_model.py.
+
+

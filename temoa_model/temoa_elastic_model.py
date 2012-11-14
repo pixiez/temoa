@@ -1,13 +1,16 @@
 #!/usr/bin/env coopr_python
 
+# This elastic demand version of the TEMOA model. The script price_generator.py
+# should be used to generate the price data (price.dat) for the reference Demand case.
+
 __all__ = ('temoa_create_model', )
 
-from temoa_rules import *
+from temoa_elastic_rules import *
 
 
-def temoa_create_model(name='TEMOA Entire Energy System Economic Optimization Model'):
+def temoa_create_elastic_model(name='TEMOA Entire Energy System Economic Optimization Model'):
     """\
-Returns an abstract instance of the TEMOA model.  (Abstract because it will yet
+Returns an abstract instance of the elastic TEMOA model.  (Abstract because it will yet
 need to be populated with "dot dat" file data.)
 
 Model characteristics:
@@ -61,9 +64,9 @@ Lifetime(tech_all, vintage_all)
 any particular
 technology or vintage of technology.
 Demand(time_optimize, time_season, time_of_day, commodity_demand)
-Demand sets the exogenous amount of a commodity demand in each optimization
-time period, season, and time of day.  In some sense, this is the parameter
-that drives everything in the Temoa model.
+Demand sets the reference level exogenous amount of a commodity demand in each optimization
+time period, season, and time of day. This is used to initialize the model's V_Demand variable.
+The TotalWelfare objective is maximized to solve V_Demand.
 ResourceBound(time_optimize, commodity_physical)
 [default: 0] ResourceBound enables the modeler to set limits on how much of
 a given resource the model may "mine" or "import" in any given optimization
@@ -93,7 +96,7 @@ for any vintage of technology.
     M.vintage_optimize = Set(ordered=True, initialize=init_set_vintage_optimize)
     M.vintage_all = Set(ordered=True, initialize=init_set_vintage_all)
 
-         # Use BuildAction to perform inter-Set or inter-Param validation
+    # Use BuildAction to perform inter-Set or inter-Param validation
     M.validate_time = BuildAction(rule=validate_time)
 
     M.time_season = Set()
@@ -111,6 +114,12 @@ for any vintage of technology.
 
     M.commodity_carrier = M.commodity_physical | M.commodity_demand
     M.commodity_all = M.commodity_carrier | M.commodity_emissions
+
+    # ELASTIC: demand_segment (of length num_demand_segments) indexes the Demand space
+    # over which we search for an equilibrium point.
+    M.num_demand_segments = Param()
+    M.demand_segment = \
+        Set(ordered=True, rule=lambda M: range(1, value(M.num_demand_segments) + 1))
 
     M.GlobalDiscountRate = Param()
     M.PeriodLength = Param(M.time_optimize, initialize=ParamPeriodLength)
@@ -144,6 +153,18 @@ for any vintage of technology.
     M.DemandDefaultDistribution = Param(M.time_season, M.time_of_day)
     M.DemandSpecificDistribution = Param(M.time_season, M.time_of_day, M.commodity_demand)
     M.Demand = Param(M.time_optimize, M.commodity_demand)
+
+    # ELASTIC: Demand (and an associated Price and Elast) here are a reference demand,
+    # price and elasticity about which the real demand (V_Demand, see below) and price
+    # vary according to an own-price elasticity function.
+    M.Elast = Param(M.time_optimize, M.time_season, M.time_of_day,
+                    M.commodity_demand)
+    M.Price = Param(M.time_optimize, M.time_season, M.time_of_day,
+                    M.commodity_demand)
+
+    # ELASTIC: (MinDemand, MaxDemand) is the range over which search for an equilibrium.
+    M.MinDemand = Param(M.time_optimize, M.commodity_demand)
+    M.MaxDemand = Param(M.time_optimize, M.commodity_demand)
 
     # Use BuildAction: hack to perform Demand initialization and validation
     M.initialize_Demands = BuildAction(rule=CreateDemands)
@@ -225,6 +246,25 @@ for any vintage of technology.
     M.CommodityBalanceConstraint_psdc = Set(
         dimen=4, rule=CommodityBalanceConstraintIndices)
     M.DemandConstraint_psdc = Set(dimen=4, rule=DemandConstraintIndices)
+
+    # ELASTIC: New index set with demand_segment.
+    M.DemandConstraint_psdcz = M.DemandConstraint_psdc * M.demand_segment
+
+    # ELASTIC: demand is a variable: V_Demand is the sum of MinDemand and nonzero
+    # V_DemandSegment variables.
+    M.V_Demand = Var(M.DemandConstraint_psdc, initialize=Demand_rule,
+                     bounds=Demand_bounds)
+    # ELASTIC: The V_DemandSegment variables divide the (MinDemand, MaxDemand) range
+    # into a number of bounded linear variables.
+    M.V_DemandSegment = Var(M.DemandConstraint_psdcz,
+                            bounds=DemandSegment_bounds, initialize=0.0)
+
+    # ELASTIC: PriceSegment is the price at each V_DemandSegment step which is
+    # used to approximate an integral while retaining linearity.
+    #    M.PriceSegment = Param(M.time_optimize, M.time_season, M.time_of_day,
+    #                     M.commodity_demand, M.demand_segment)
+    M.PriceSegment = Param(M.DemandConstraint_psdcz, rule=PriceSegment_rule)
+
     M.DemandActivityConstraint_psdtv_dem_s0d0 = Set(dimen=8, rule=DemandActivityConstraintIndices)
     M.ExistingCapacityConstraint_tv = Set(
         dimen=2, rule=lambda M: M.ExistingCapacity.sparse_iterkeys())
@@ -245,8 +285,9 @@ for any vintage of technology.
     M.EmissionLimitConstraint_pe = Set(
         dimen=2, rule=lambda M: M.EmissionLimit.sparse_iterkeys())
 
+    # ELASTIC: The objective is to minimize[producer costs - consumer costs].
     # Objective
-    M.TotalCost = Objective(rule=TotalCost_rule, sense=minimize)
+    M.TotalWelfare = Objective(rule=TotalWelfare_rule, sense=minimize)
 
     # Constraints
 
@@ -264,11 +305,17 @@ for any vintage of technology.
     #   Model Constraints
     #    - in driving order.  (e.g., without Demand, none of the others are
     #      very useful.)
+
+    # ELASTIC: The constraint that defines demand as a function of price (or vice versa)
+    M.DemandElasticityConstraint = Constraint(M.DemandConstraint_psdc, rule=DemandElasticity_Constraint)
+
     M.DemandConstraint = Constraint(M.DemandConstraint_psdc, rule=Demand_Constraint)
 
+    
     # NOTE: M.DemandActivityConstraint is currently switched off as the constraint becomes
     # a quadratic when Demand is promoted to a variable.
-	# M.DemandActivityConstraint = Constraint(M.DemandActivityConstraint_psdtv_dem_s0d0, rule=DemandActivity_Constraint)
+
+    # M.DemandActivityConstraint = Constraint(M.DemandActivityConstraint_psdtv_dem_s0d0, rule=DemandActivity_Constraint)
 
     M.ProcessBalanceConstraint = Constraint(M.ProcessBalanceConstraint_psditvo, rule=ProcessBalance_Constraint)
     M.CommodityBalanceConstraint = Constraint(M.CommodityBalanceConstraint_psdc, rule=CommodityBalance_Constraint)
@@ -295,7 +342,7 @@ for any vintage of technology.
 
 def temoa_create_model_container(model):
     """Creates a container (wraps a dictionary) model_data to store
-    model, instance and results data for processing after a solve.
+    model, instance and resulta data for processing after a solve.
     """
     from pyutilib.misc import Container
     model_data = Container()
@@ -303,7 +350,7 @@ def temoa_create_model_container(model):
     return model_data
 
 
-model = temoa_create_model()
+model = temoa_create_elastic_model()
 
 
 if '__main__' == __name__:

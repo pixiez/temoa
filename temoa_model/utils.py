@@ -15,7 +15,7 @@ results_writer(instance,file=FILE, mode=MODE) takes the relevant
 instance, results returned by the solver and prints the
 1.  Solver summary
 2. Objective,
-3. Variables [lower bound, value, upper bound]
+3. Variables [lower bound, value, upper bound, reduced cost (if available)]
 4. Constraints [lower bound, value, upper bound, dual (if available)]
 in space delimited format. FILE is the name of the output file.
 MODE is write mode: 'w' (write) or 'a' (append). The defaults are:
@@ -28,7 +28,7 @@ MODE is write mode: 'w' (write) or 'a' (append). The defaults are:
 
     instance.load(results)
     print >>fp, '\"', instance.name, '\"'
-    print >>fp, '\"', instance.doc, '\"'
+    print >>fp, '\"Model Documentation: ', instance.doc, '\"'
     print >>fp, '\"Solver Summary\"'
     print >>fp, '\"', results['Solver'][0], '\"'
     # Objective
